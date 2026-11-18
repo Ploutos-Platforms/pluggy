@@ -643,13 +643,9 @@ class PluginManager:
         calls all registered plugins except the ones from remove_plugins."""
         orig: HookCaller = getattr(self.hook, name)
         plugins_to_remove = set(remove_plugins)
-        # Optimization: discard plugins to remove which don't actually implement
-        # the hook, to make checks faster.
-        plugins_to_remove.intersection_update(
-            hookimpl.plugin for hookimpl in orig._hookimpls
-        )
-        # Optimization: if none of the plugins to remove actually implement the
-        # hook, avoid the subset hook caller overhead.
+        # Optimization: if there are no plugins to remove, avoid the subset
+        # hook caller overhead. Do not discard plugins which do not yet
+        # implement the hook; they may register later and must be excluded.
         if not plugins_to_remove:
             return orig
         return _SubsetHookCaller(orig, plugins_to_remove)

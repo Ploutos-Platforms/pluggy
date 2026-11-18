@@ -773,6 +773,29 @@ def test_subset_hook_caller(pm: PluginManager) -> None:
     assert repr(hc) == "<_SubsetHookCaller 'he_method1'>"
 
 
+def test_subset_hook_caller_late_registration(pm: PluginManager) -> None:
+    class Hooks:
+        @hookspec
+        def he_method1(self, arg):
+            pass
+
+    pm.add_hookspecs(Hooks)
+    out = []
+
+    class Plugin1:
+        @hookimpl
+        def he_method1(self, arg):
+            out.append(arg)
+
+    plugin1 = Plugin1()
+    hc = pm.subset_hook_caller("he_method1", remove_plugins=[plugin1])
+    pm.register(plugin1)
+    hc(arg=1)
+    assert out == []
+    pm.hook.he_method1(arg=2)
+    assert out == [2]
+
+
 def test_subset_hook_caller_with_specname(pm: PluginManager) -> None:
     """Test that subset_hook_caller doesn't get confused by specname."""
 
